@@ -1,0 +1,32 @@
+# Python environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# MLflow local artifacts
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Python tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local model artifacts
+models/*.pkl
+models/*.joblib
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/
