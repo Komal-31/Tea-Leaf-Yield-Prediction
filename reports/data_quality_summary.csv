@@ -1,0 +1,6 @@
+Issue,Affected_Records,Proposed_Action
+Duplicate records,44,Remove duplicates before splitting
+Experience unit inconsistency,292,Convert >50 multiples of 12; document ambiguity
+Invalid slope readings,65,Replace invalid readings and impute from train
+Suspicious target outliers,13,Investigate decimal errors; do not auto-correct
+Invalid dates,0,No correction required
