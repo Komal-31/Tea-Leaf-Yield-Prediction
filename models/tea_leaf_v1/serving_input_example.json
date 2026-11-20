@@ -1,0 +1,46 @@
+{
+  "dataframe_split": {
+    "columns": [
+      "worker_exp_yr",
+      "rain_mm_week",
+      "slope_deg",
+      "temp_c",
+      "bush_age_yr",
+      "hours_worked",
+      "flush",
+      "section"
+    ],
+    "data": [
+      [
+        48.0,
+        285,
+        21.0,
+        15.9,
+        10,
+        5.4,
+        "monsoon",
+        "River Side"
+      ],
+      [
+        11.0,
+        261,
+        18.0,
+        28.7,
+        13,
+        8.2,
+        "monsoon",
+        "River Side"
+      ],
+      [
+        20.0,
+        149,
+        23.0,
+        26.7,
+        19,
+        9.7,
+        "second",
+        "River Side"
+      ]
+    ]
+  }
+}
