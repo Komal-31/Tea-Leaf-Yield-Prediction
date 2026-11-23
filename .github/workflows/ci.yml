@@ -25,6 +25,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run saved model tests
+      - name: Run model and API tests
         run: |
-          python -m pytest tests/test_model_artifact.py -v
+          python -m pytest tests/test_model_artifact.py tests/test_api.py -v
