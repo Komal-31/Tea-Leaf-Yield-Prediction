@@ -11,3 +11,4 @@ fastapi
 httpx2
 uvicorn[standard]
 streamlit
+pyyaml
