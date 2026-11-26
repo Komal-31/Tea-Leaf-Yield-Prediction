@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tea-leaf-api
+  labels:
+    app: tea-leaf-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tea-leaf-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: tea-leaf-api
+    spec:
+      containers:
+        - name: tea-leaf-api
+          image: tea-leaf-api:1.0.0
+          imagePullPolicy: Never          # Use locally built image
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          # Startup probe — allow time for model loading
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12       # Up to 60 s for model loading
+          # Readiness probe — ensure model is loaded before receiving traffic
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          # Liveness probe — restart if the app becomes unresponsive
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            failureThreshold: 3
+      securityContext:
+        runAsNonRoot: true
