@@ -306,6 +306,18 @@ tests/test_deployment.py::TestApplicationLogging::test_prediction_logs_execution
 
 As documented in Phase 2, the remote DVC storage was not configured by the team; these files are shared out-of-band and are properly excluded from Git/CI. All serving-dependent tests pass cleanly.
 
+### 3. Git Commits & Author Identity
+
+All 5 assigned tasks were committed to the `shubham-deployment` branch with proper attribution to Shubham Mittal:
+
+```text
+3ed9607 - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Document deployment workflow and verification results
+b244465 - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Extend CI with container and deployment smoke tests
+7806efd - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Add structured application and prediction logging
+a8ebc58 - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Add Kubernetes deployment, service and health probes
+e8f8d93 - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Add Docker containerization for tea leaf prediction API
+```
+
 ---
 
 ## Known Limitations and Blockers
