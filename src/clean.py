@@ -1,92 +1,115 @@
-
 from pathlib import Path
 import pandas as pd
 import numpy as np
 import json
+import yaml
 
-# Project paths
+# Project root
 ROOT = Path(__file__).resolve().parent.parent
-RAW_PATH = ROOT / "data" / "raw" / "train.csv"
-OUTPUT_DIR = ROOT / "data" / "processed"
 
-CUTOFF_DATE = pd.Timestamp("2026-06-01")
+# Load centralized configuration
+with open(ROOT / "params.yaml", encoding="utf-8") as f:
+    CONFIG = yaml.safe_load(f)
+
+PATHS = CONFIG["paths"]
+DATA = CONFIG["data"]
+CLEANING = CONFIG["cleaning"]
+
+RAW_PATH = ROOT / PATHS["raw_train"]
+TRAIN_PATH = ROOT / PATHS["processed_train"]
+VAL_PATH = ROOT / PATHS["processed_val"]
+OUTPUT_DIR = TRAIN_PATH.parent
+
+CUTOFF_DATE = pd.Timestamp(CLEANING["validation_cutoff"])
 
 
 def clean_data():
+
     # 1. Load original data
     df = pd.read_csv(RAW_PATH)
     original_rows = len(df)
 
+    id_col = DATA["id_column"]
+    date_col = DATA["date_column"]
+    group_col = DATA["group_column"]
+    target_col = DATA["target_column"]
+
+    exp_col = CLEANING["experience_column"]
+    slope_col = CLEANING["slope_column"]
+
     # 2. Remove duplicate records
-    df = df.drop_duplicates(subset="record_id").copy()
+    df = df.drop_duplicates(subset=id_col).copy()
 
     # 3. Parse dates
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-
-    if df["date"].isna().any():
-        raise ValueError("Invalid dates found in dataset")
-
-    # 4. Correct suspected months-versus-years errors
-    exp_mask = (
-        (df["worker_exp_yr"] > 50)
-        & (df["worker_exp_yr"] % 12 == 0)
+    df[date_col] = pd.to_datetime(
+        df[date_col], errors="coerce"
     )
 
-    df.loc[exp_mask, "worker_exp_yr"] = (
-        df.loc[exp_mask, "worker_exp_yr"] / 12
+    if df[date_col].isna().any():
+        raise ValueError("Invalid dates found in dataset")
+
+    # 4. Correct experience recorded in months
+    exp_mask = (
+        df[group_col] == CLEANING["experience_unit_group"]
+    )
+
+    changed_mask = exp_mask & (df[exp_col] != 0)
+
+    df[exp_col] = df[exp_col].astype(float)
+
+    df.loc[exp_mask, exp_col] = (
+        df.loc[exp_mask, exp_col]
+        / CLEANING["experience_conversion_factor"]
     )
 
     # 5. Mark invalid slope readings as missing
     invalid_slope = (
-        (df["slope_deg"] < 0)
-        | (df["slope_deg"] > 90)
+        (df[slope_col] < CLEANING["slope_min"])
+        | (df[slope_col] > CLEANING["slope_max"])
     )
 
-    df.loc[invalid_slope, "slope_deg"] = np.nan
+    df.loc[invalid_slope, slope_col] = np.nan
 
     # 6. Flag suspicious target values
     df["target_outlier_flag"] = (
-        df["kg_per_worker"] > 100
+        df[target_col] > DATA["suspicious_target_threshold"]
     ).astype(int)
 
     # 7. Chronological train-validation split
-    train = df[df["date"] < CUTOFF_DATE].copy()
-    val = df[df["date"] >= CUTOFF_DATE].copy()
+    train = df[df[date_col] < CUTOFF_DATE].copy()
+    val = df[df[date_col] >= CUTOFF_DATE].copy()
 
     if train.empty or val.empty:
         raise ValueError("Train or validation dataset is empty")
 
     # 8. Calculate median using training data only
-    slope_median = train["slope_deg"].median()
+    slope_median = train[slope_col].median()
+
+    if pd.isna(slope_median):
+        raise ValueError("Cannot calculate training slope median")
 
     # 9. Apply training median to both datasets
-    train["slope_deg"] = train["slope_deg"].fillna(
-        slope_median
-    )
-
-    val["slope_deg"] = val["slope_deg"].fillna(
-        slope_median
-    )
+    train[slope_col] = train[slope_col].fillna(slope_median)
+    val[slope_col] = val[slope_col].fillna(slope_median)
 
     # 10. Save cleaned datasets
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    VAL_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    train.to_csv(
-        OUTPUT_DIR / "train_clean.csv",
-        index=False
-    )
-
-    val.to_csv(
-        OUTPUT_DIR / "val_clean.csv",
-        index=False
-    )
+    train.to_csv(TRAIN_PATH, index=False)
+    val.to_csv(VAL_PATH, index=False)
 
     # 11. Save cleaning metadata
     metadata = {
         "original_rows": original_rows,
         "unique_rows": len(df),
         "duplicates_removed": original_rows - len(df),
-        "experience_values_corrected": int(exp_mask.sum()),
+        "experience_group": CLEANING["experience_unit_group"],
+        "experience_rows_affected": int(exp_mask.sum()),
+        "experience_values_corrected": int(changed_mask.sum()),
+        "experience_conversion_factor": CLEANING[
+            "experience_conversion_factor"
+        ],
         "invalid_slopes": int(invalid_slope.sum()),
         "suspicious_targets": int(
             df["target_outlier_flag"].sum()
@@ -97,21 +120,20 @@ def clean_data():
         "cutoff_date": str(CUTOFF_DATE.date())
     }
 
-    with open(
-        OUTPUT_DIR / "cleaning_metadata.json",
-        "w",
-        encoding="utf-8"
-    ) as f:
+    metadata_path = OUTPUT_DIR / "cleaning_metadata.json"
+
+    with open(metadata_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=4)
 
     print("\n=== CLEANING COMPLETED ===")
+
     for key, value in metadata.items():
         print(f"{key}: {value}")
 
     print("\nSaved files:")
-    print(OUTPUT_DIR / "train_clean.csv")
-    print(OUTPUT_DIR / "val_clean.csv")
-    print(OUTPUT_DIR / "cleaning_metadata.json")
+    print(TRAIN_PATH)
+    print(VAL_PATH)
+    print(metadata_path)
 
 
 if __name__ == "__main__":
