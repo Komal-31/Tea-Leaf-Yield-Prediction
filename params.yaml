@@ -11,6 +11,8 @@ paths:
   processed_val: data/processed/val_clean.csv
   v1_model_dir: models/tea_leaf_v1
   v2_model_dir: models/tea_leaf_v2
+  v3_model_dir: models/tea_leaf_v3
+  v4_model_dir: models/tea_leaf_v4
   mlflow_db: mlflow.db
   reports_dir: reports
   predictions_dir: predictions
@@ -67,19 +69,35 @@ training:
     robust_comparison: robust_model_comparison.csv
 
 monitoring:
+  baseline_model_version: 3
+  baseline_model_dir: models/tea_leaf_v3
   psi_bins: 10
   psi_binning_method: quantile
   psi_epsilon: 1.0e-6
   psi_thresholds:
     moderate: 0.1
     significant: 0.25
+  drift_report_filename: drift_report.csv
+  group_performance_filename: group_performance.csv
+  chart_filename: drift_and_group_mae.png
 
 retraining:
+  baseline_model_version: 3
+  baseline_model_dir: models/tea_leaf_v3
+  baseline_run_id: "50a5ecb488a3438aa1d76aece128c2b2"
+  retrained_model_dir: models/tea_leaf_v4
+  retrained_model_name: HistGradientBoosting_v4_corrected
+  historical_model_dirs:
+    - models/tea_leaf_v1
+    - models/tea_leaf_v2
+    - models/tea_leaf_v3
   later_train_ratio: 0.7
   promotion_improvement_threshold: 0.05
   model_type: HistGradientBoostingRegressor
   max_iter: 200
   random_state: 42
+  comparison_filename: model_comparison.csv
+  decision_filename: promotion_decision.json
 
 mlflow:
   experiment_name: Tea_Leaf_Yield_Prediction
