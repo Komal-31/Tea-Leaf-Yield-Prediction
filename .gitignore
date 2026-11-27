@@ -12,7 +12,6 @@ __pycache__/
 # MLflow local artifacts
 mlruns/
 mlartifacts/
-mlflow.db
 
 # Python tools
 .pytest_cache/

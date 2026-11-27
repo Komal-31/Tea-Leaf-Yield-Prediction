@@ -1,0 +1,35 @@
+{
+  "experiment_name": "Tea_Leaf_Yield_Prediction",
+  "registered_model_name": "TeaLeafYieldPredictor",
+  "data_sha256": "1771136da68a117cf0cda6fef352ba5ab237ccac8f42dabbb9487ced62b95fd0",
+  "v1_run_id": "b68942e1a3674af1951462c2d388abb6",
+  "v1_historical_run_id": "77cd0bd9428041ef8b2d6d23b161296e",
+  "v2_run_id": "6075cd17dbe14c1fba353916d5754e7d",
+  "v1_version": 1,
+  "v2_version": 2,
+  "champion_version": 2,
+  "champion_alias": "champion",
+  "cleaned_train_rows": 987,
+  "excluded_suspicious_rows": 13,
+  "later_total_rows": 300,
+  "later_train_rows": 210,
+  "later_eval_rows": 90,
+  "later_train_date_range": [
+    "2026-07-01",
+    "2026-08-14"
+  ],
+  "later_eval_date_range": [
+    "2026-08-14",
+    "2026-08-31"
+  ],
+  "v1_mae": 7.438206,
+  "v1_rmse": 10.588706,
+  "v2_mae": 2.315265,
+  "v2_rmse": 3.09696,
+  "improvement_percent": 68.8733,
+  "required_threshold_percent": 5.0,
+  "required_max_mae": 7.066296,
+  "promotion_decision": "promote",
+  "promoted": true,
+  "decision_reason": "v2 MAE (2.3153) is <= 95% threshold (7.0663) with 68.87% improvement over v1 (7.4382)."
+}
