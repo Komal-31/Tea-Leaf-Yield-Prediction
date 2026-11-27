@@ -6,6 +6,7 @@ import yaml
 
 import mlflow
 import mlflow.sklearn
+from mlflow import MlflowClient
 import numpy as np
 import pandas as pd
 
@@ -98,8 +99,23 @@ def main() -> dict:
     disk_df = pd.read_csv(output_path)
     validate_predictions_df(disk_df, holdout_df, id_col=data_cfg["id_column"])
 
+    # Independently reload champion from registry and confirm saved predictions match
+    client = MlflowClient()
+    champ_mv = client.get_model_version_by_alias(
+        mlflow_cfg["registered_model_name"], mlflow_cfg["champion_alias"]
+    )
+    reloaded_champion = mlflow.sklearn.load_model(model_uri)
+    reloaded_preds = np.asarray(
+        reloaded_champion.predict(holdout_df[data_cfg["features"]]), dtype=float
+    )
+    if not np.allclose(disk_df["prediction"].to_numpy(dtype=float), reloaded_preds, rtol=0.0, atol=1e-4):
+        raise ValueError("Saved predictions do not match independently reloaded champion outputs")
+
     summary = {
         "model_uri": model_uri,
+        "champion_version": int(champ_mv.version),
+        "champion_source": champ_mv.source,
+        "champion_run_id": champ_mv.run_id,
         "holdout_rows": int(len(holdout_df)),
         "prediction_rows": int(len(disk_df)),
         "columns": list(disk_df.columns),
@@ -107,6 +123,7 @@ def main() -> dict:
         "prediction_mean": round(float(disk_df["prediction"].mean()), 4),
         "prediction_max": round(float(disk_df["prediction"].max()), 4),
         "output_path": str(output_path),
+        "independent_reload_verified": True,
         "validated": True,
     }
     print("\n=== HOLDOUT PREDICTIONS SUMMARY ===")
