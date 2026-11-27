@@ -22,7 +22,7 @@ spec:
       containers:
         - name: tea-leaf-api
           image: tea-leaf-api:1.0.0
-          imagePullPolicy: Never          # Use locally built image
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
               protocol: TCP
@@ -41,24 +41,27 @@ spec:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            failureThreshold: 12       # Up to 60 s for model loading
+            initialDelaySeconds: 2
+            periodSeconds: 3
+            failureThreshold: 20       # Up to 60 s for model loading
           # Readiness probe — ensure model is loaded before receiving traffic
           readinessProbe:
             httpGet:
               path: /ready
               port: 8000
-            initialDelaySeconds: 10
-            periodSeconds: 10
+            initialDelaySeconds: 2
+            periodSeconds: 5
             failureThreshold: 3
           # Liveness probe — restart if the app becomes unresponsive
           livenessProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 15
-            periodSeconds: 15
+            initialDelaySeconds: 5
+            periodSeconds: 10
             failureThreshold: 3
       securityContext:
         runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000

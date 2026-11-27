@@ -20,8 +20,8 @@ COPY streamlit_app.py .
 COPY models/ models/
 
 # --------------- Non-root user --------------------------------
-RUN useradd --create-home appuser
-USER appuser
+RUN useradd -u 1000 --create-home appuser
+USER 1000:1000
 
 # --------------- Container health check -----------------------
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \

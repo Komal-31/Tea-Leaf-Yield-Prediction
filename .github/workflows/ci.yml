@@ -117,9 +117,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1.12.0
-        with:
-          cluster_name: kind
+        run: |
+          kind create cluster --name kind --wait 120s
 
       - name: Build Docker image
         run: |
@@ -127,7 +126,7 @@ jobs:
 
       - name: Load image into kind cluster
         run: |
-          kind load docker-image tea-leaf-api:1.0.0
+          kind load docker-image tea-leaf-api:1.0.0 --name kind
 
       - name: Apply Kubernetes manifests
         run: |
@@ -136,7 +135,15 @@ jobs:
 
       - name: Wait for deployment rollout
         run: |
-          kubectl rollout status deployment/tea-leaf-api --timeout=180s
+          kubectl rollout status deployment/tea-leaf-api --timeout=180s || {
+            echo "=== ROLLOUT FAILED: POD STATUS ==="
+            kubectl get pods -o wide
+            echo "=== DESCRIBE PODS ==="
+            kubectl describe pods -l app=tea-leaf-api
+            echo "=== CLUSTER EVENTS ==="
+            kubectl get events --sort-by='.lastTimestamp'
+            exit 1
+          }
 
       - name: Verify pods and service
         run: |
@@ -159,4 +166,4 @@ jobs:
       - name: Deployment logs
         if: always()
         run: |
-          kubectl logs -l app=tea-leaf-api --tail=50
+          kubectl logs -l app=tea-leaf-api --tail=50 || true
