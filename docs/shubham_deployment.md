@@ -311,6 +311,8 @@ As documented in Phase 2, the remote DVC storage was not configured by the team;
 All 5 assigned tasks were committed to the `shubham-deployment` branch with proper attribution to Shubham Mittal:
 
 ```text
+9126f08 - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Fix Kubernetes kind image loading, security context and probe timings in CI
+71f947c - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Update documentation with commit hashes and author identity
 3ed9607 - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Document deployment workflow and verification results
 b244465 - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Extend CI with container and deployment smoke tests
 7806efd - Shubham Mittal <181240491+Shubhammittal1721@users.noreply.github.com> : Add structured application and prediction logging
