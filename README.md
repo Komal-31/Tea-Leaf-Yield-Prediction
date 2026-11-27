@@ -26,7 +26,16 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 streamlit run streamlit_app.py
 
 # Run tests
-python -m pytest tests/test_model_artifact.py tests/test_api.py tests/test_deployment.py -v
+python -m pytest tests/test_model_artifact.py tests/test_api.py tests/test_deployment.py tests/test_monitoring.py tests/test_retraining.py tests/test_holdout_predictions.py -v
+```
+
+### Stage 4 Monitoring, Retraining & Holdout Predictions
+
+```bash
+python -m src.data_audit        # Audit the 7 faculty data quality issues
+python -m src.monitor           # PSI drift report + v1 section-wise MAE on later.csv
+python -m src.retrain           # Chronological 70:30 retraining, 5% rule & MLflow @champion
+python -m src.predict_holdout   # Generate predictions/holdout_predictions.csv via @champion
 ```
 
 ### Docker Deployment
@@ -91,7 +100,12 @@ curl -X POST http://localhost:8000/predict \
 ├── .dockerignore               # Docker build exclusions
 ├── requirements.txt            # Python dependencies
 ├── render.yaml                 # Render deployment config
-├── models/tea_leaf_v1/         # Trained MLflow model artifacts
+├── models/tea_leaf_v1/         # Trained MLflow v1 model artifacts
+├── models/tea_leaf_v2/         # Retrained MLflow v2 model artifacts (@champion)
+├── mlflow.db                   # SQLite MLflow tracking & model registry
+├── params.yaml                 # Centralized Stage 4 pipeline configuration
+├── predictions/
+│   └── holdout_predictions.csv # Final holdout predictions (250 rows)
 ├── k8s/
 │   ├── deployment.yaml         # Kubernetes Deployment (3 replicas)
 │   └── service.yaml            # Kubernetes Service (ClusterIP)
@@ -99,23 +113,27 @@ curl -X POST http://localhost:8000/predict \
 │   ├── test_api.py             # API endpoint tests
 │   ├── test_model_artifact.py  # Model artifact tests
 │   ├── test_deployment.py      # Docker & Kubernetes manifest tests
+│   ├── test_monitoring.py      # PSI drift & section-wise evaluation tests
+│   ├── test_retraining.py      # Chronological split & 5% promotion rule tests
+│   ├── test_holdout_predictions.py # Holdout prediction schema & validation tests
 │   ├── test_data_quality.py    # Data quality tests (requires datasets)
 │   └── test_model.py           # Model tests (requires MLflow DB)
 ├── docs/
-│   └── shubham_deployment.md   # Deployment documentation
-├── src/                        # Data cleaning and training scripts
+│   ├── shubham_deployment.md   # Deployment documentation
+│   └── anushka_monitoring.md   # Monitoring, retraining & holdout documentation
+├── src/                        # Data cleaning, training, monitoring & retraining scripts
 ├── data/                       # DVC-tracked datasets
 ├── notebooks/                  # Exploratory analysis
-└── reports/                    # Model comparison reports
+└── reports/                    # Model comparison, drift, compliance & findings reports
 ```
 
 ---
 
 ## Team Contributions
 
-| Member | Responsibilities |
-|--------|-----------------|
-| Ravish | Repository, DVC, data cleaning, model training, MLflow tracking |
-| Komal | Model artifact testing, CI, FastAPI serving, Render, Streamlit |
-| Shubham | Docker, Kubernetes, logging, CI deployment tests, documentation |
-| Anushka | Drift monitoring, retraining, holdout predictions |
+| Member | Enrolment | Responsibilities |
+|--------|-----------|-----------------|
+| Ravish Aggarwal | S24CSEU1466 | Repository, DVC, data cleaning, model training, MLflow tracking |
+| Komal Bisht | S24CSEU2760 | Model artifact testing, CI, FastAPI serving, Render, Streamlit |
+| Shubham Mittal | S24CSEU2764 | Docker, Kubernetes, logging, CI deployment tests, documentation |
+| Anushka Sharma | S24CSEU2761 | Data audit, PSI drift monitoring, chronological retraining, `@champion` selection, holdout predictions, `findings.yaml`, compliance audit |

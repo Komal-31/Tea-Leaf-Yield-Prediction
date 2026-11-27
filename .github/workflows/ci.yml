@@ -2,7 +2,7 @@ name: Tea Leaf Yield Prediction CI
 
 on:
   push:
-    branches: [main, shubham-deployment]
+    branches: [main, shubham-deployment, anushka-monitoring]
   pull_request:
     branches: [main]
 
@@ -35,6 +35,10 @@ jobs:
       - name: Run deployment and manifest tests
         run: |
           python -m pytest tests/test_deployment.py -v
+
+      - name: Run monitoring, retraining and holdout tests
+        run: |
+          python -m pytest tests/test_monitoring.py tests/test_retraining.py tests/test_holdout_predictions.py -v
 
   # ----------------------------------------------------------------
   # Job 2: Docker build, container run and HTTP smoke tests
