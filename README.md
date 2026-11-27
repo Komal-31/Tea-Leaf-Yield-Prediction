@@ -100,10 +100,12 @@ curl -X POST http://localhost:8000/predict \
 ├── .dockerignore               # Docker build exclusions
 ├── requirements.txt            # Python dependencies
 ├── render.yaml                 # Render deployment config
-├── models/tea_leaf_v1/         # Trained MLflow v1 model artifacts
-├── models/tea_leaf_v2/         # Retrained MLflow v2 model artifacts (@champion)
+├── models/tea_leaf_v1/         # Initial MLflow v1 model artifacts
+├── models/tea_leaf_v2/         # Initial retrained MLflow v2 model artifacts
+├── models/tea_leaf_v3/         # Corrected baseline MLflow v3 model artifacts
+├── models/tea_leaf_v4/         # Final retrained MLflow v4 model artifacts (@champion)
 ├── mlflow.db                   # SQLite MLflow tracking & model registry
-├── params.yaml                 # Centralized Stage 4 pipeline configuration
+├── params.yaml                 # Centralized pipeline configuration
 ├── predictions/
 │   └── holdout_predictions.csv # Final holdout predictions (250 rows)
 ├── k8s/
@@ -116,6 +118,7 @@ curl -X POST http://localhost:8000/predict \
 │   ├── test_monitoring.py      # PSI drift & section-wise evaluation tests
 │   ├── test_retraining.py      # Chronological split & 5% promotion rule tests
 │   ├── test_holdout_predictions.py # Holdout prediction schema & validation tests
+│   ├── test_cleaning_pipeline.py # Synthetic cleaning pipeline tests
 │   ├── test_data_quality.py    # Data quality tests (requires datasets)
 │   └── test_model.py           # Model tests (requires MLflow DB)
 ├── docs/

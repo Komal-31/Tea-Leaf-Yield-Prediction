@@ -27,7 +27,6 @@ def test_psi_shifted_distributions():
 
 def test_psi_zero_frequency_bins_and_out_of_range():
     ref = np.linspace(0.0, 10.0, 200)
-    # Current falls entirely outside reference upper bins, leaving multiple 0-count bins
     cur = np.full(100, 50.0)
     psi, bins_used = compute_psi(ref, cur, bins=10)
     assert bins_used == 10
@@ -57,10 +56,11 @@ def test_psi_missing_values_and_duplicate_quantiles():
     assert psi == pytest.approx(0.0, abs=1e-6)
 
 
-def test_compute_psi_report_identifies_most_drifted():
+def test_compute_psi_report_identifies_most_drifted_and_excludes_record_id():
     rng = np.random.default_rng(123)
     ref_df = pd.DataFrame(
         {
+            "record_id": np.arange(1, 201),
             "stable_feat": rng.normal(10, 2, 200),
             "drifted_feat": rng.normal(5, 1, 200),
             "kg_per_worker": rng.normal(30, 4, 200),
@@ -68,6 +68,7 @@ def test_compute_psi_report_identifies_most_drifted():
     )
     cur_df = pd.DataFrame(
         {
+            "record_id": np.arange(500, 650),
             "stable_feat": rng.normal(10, 2, 150),
             "drifted_feat": rng.normal(12, 1, 150),
             "kg_per_worker": rng.normal(31, 4, 150),
@@ -76,9 +77,11 @@ def test_compute_psi_report_identifies_most_drifted():
     report = compute_psi_report(
         ref_df,
         cur_df,
-        numeric_columns=["stable_feat", "drifted_feat", "kg_per_worker"],
+        numeric_columns=["record_id", "stable_feat", "drifted_feat", "kg_per_worker"],
         target_column="kg_per_worker",
+        id_column="record_id",
     )
+    assert "record_id" not in report["column"].tolist()
     assert len(report) == 3
     most_drifted = report.loc[report["is_most_drifted_feature"], "column"].iloc[0]
     assert most_drifted == "drifted_feat"
