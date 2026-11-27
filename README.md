@@ -60,10 +60,10 @@ kubectl port-forward service/tea-leaf-api-service 8080:80
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/` | Home — service status |
-| GET | `/health` | Health check |
+| GET | `/` | Home — service status and served model version |
+| GET | `/health` | Health check (`{"status": "ok", "model_loaded": true, "model_version": 4}`) |
 | GET | `/ready` | Readiness probe |
-| POST | `/predict` | Predict tea leaf yield |
+| POST | `/predict` | Predict tea leaf yield (rejects `hours_worked > 15` and `rain_mm_week < 0` with HTTP 422) |
 | GET | `/docs` | Swagger documentation |
 
 ### Sample Prediction Request
@@ -72,12 +72,12 @@ kubectl port-forward service/tea-leaf-api-service 8080:80
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
   -d '{
-    "worker_exp_yr": 48,
-    "rain_mm_week": 285,
-    "slope_deg": 21,
-    "temp_c": 15.9,
+    "worker_exp_yr": 12,
+    "rain_mm_week": 150,
+    "slope_deg": 17,
+    "temp_c": 25,
     "bush_age_yr": 10,
-    "hours_worked": 5.4,
+    "hours_worked": 6,
     "flush": "monsoon",
     "section": "River Side"
   }'
@@ -86,7 +86,7 @@ curl -X POST http://localhost:8000/predict \
 **Response:**
 
 ```json
-{"predicted_yield_kg_per_worker": 25.28}
+{"predicted_yield_kg_per_worker": 24.39, "model_version": 4}
 ```
 
 ---
@@ -94,8 +94,9 @@ curl -X POST http://localhost:8000/predict \
 ## Project Structure
 
 ```
-├── app.py                      # FastAPI application with logging
-├── streamlit_app.py            # Streamlit frontend
+├── app.py                      # FastAPI application with logging (serves v4 @champion)
+├── serving.py                  # Shared serving config & champion model loader
+├── streamlit_app.py            # Streamlit frontend (serves v4 @champion)
 ├── Dockerfile                  # Production Docker image
 ├── .dockerignore               # Docker build exclusions
 ├── requirements.txt            # Python dependencies
@@ -122,6 +123,7 @@ curl -X POST http://localhost:8000/predict \
 │   ├── test_data_quality.py    # Data quality tests (requires datasets)
 │   └── test_model.py           # Model tests (requires MLflow DB)
 ├── docs/
+│   ├── komal_contribution.md   # API, serving, Streamlit, CI & attribution documentation
 │   ├── shubham_deployment.md   # Deployment documentation
 │   └── anushka_monitoring.md   # Monitoring, retraining & holdout documentation
 ├── src/                        # Data cleaning, training, monitoring & retraining scripts

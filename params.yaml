@@ -103,3 +103,11 @@ mlflow:
   experiment_name: Tea_Leaf_Yield_Prediction
   registered_model_name: TeaLeafYieldPredictor
   champion_alias: champion
+
+serving:
+  model_dir: models/tea_leaf_v4
+  model_version: 4
+  registered_model_name: TeaLeafYieldPredictor
+  champion_alias: champion
+  max_hours_worked: 15
+  min_rain_mm_week: 0
