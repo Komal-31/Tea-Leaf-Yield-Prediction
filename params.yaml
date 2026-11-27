@@ -1,0 +1,60 @@
+project:
+  group_id: G055
+  problem_id: MP148
+  name: Tea Leaf Yield Prediction
+
+paths:
+  raw_train: data/raw/train.csv
+  raw_later: data/raw/later.csv
+  raw_holdout: data/raw/holdout_features.csv
+  processed_train: data/processed/train_clean.csv
+  processed_val: data/processed/val_clean.csv
+  v1_model_dir: models/tea_leaf_v1
+  v2_model_dir: models/tea_leaf_v2
+  mlflow_db: mlflow.db
+  reports_dir: reports
+  predictions_dir: predictions
+
+data:
+  target_column: kg_per_worker
+  id_column: record_id
+  date_column: date
+  group_column: section
+  features:
+    - worker_exp_yr
+    - rain_mm_week
+    - slope_deg
+    - temp_c
+    - bush_age_yr
+    - hours_worked
+    - flush
+    - section
+  numeric_columns:
+    - worker_exp_yr
+    - rain_mm_week
+    - slope_deg
+    - temp_c
+    - bush_age_yr
+    - hours_worked
+    - kg_per_worker
+  suspicious_target_threshold: 100.0
+
+monitoring:
+  psi_bins: 10
+  psi_binning_method: quantile
+  psi_epsilon: 1.0e-6
+  psi_thresholds:
+    moderate: 0.1
+    significant: 0.25
+
+retraining:
+  later_train_ratio: 0.7
+  promotion_improvement_threshold: 0.05
+  model_type: HistGradientBoostingRegressor
+  max_iter: 200
+  random_state: 42
+
+mlflow:
+  experiment_name: Tea_Leaf_Yield_Prediction
+  registered_model_name: TeaLeafYieldPredictor
+  champion_alias: champion
