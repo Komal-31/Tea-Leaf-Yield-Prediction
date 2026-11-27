@@ -1,0 +1,62 @@
+# MP148 findings --- fill in every value, keep every key.
+# The marking tool reads this file. Write null only where the comment says so.
+# Use the exact column names and group values from your data files.
+
+group_id: "G055"          # your group id, e.g. "G042"
+problem_id: "MP148"
+
+data_issues:
+  # For each of the 7 kinds: present: true or false.
+  # If present is false, leave the other values as null.
+  leaking_column:
+    present: false
+    column: null           # the column that must not be used as a feature
+  unit_mixup:
+    present: true
+    column: "worker_exp_yr"  # the column recorded in a different unit
+    group_value: "River Side"  # the value of section whose rows are affected
+    factor: 12             # wrong value = right value x factor
+  sentinel_value:
+    present: true
+    column: "slope_deg"
+    value: 999             # the special number typed instead of a blank
+    count: 70              # how many rows have it
+  duplicate_rows:
+    present: true
+    count: 44              # number of EXTRA copies (rows you would delete)
+  stuck_sensor:
+    present: false
+    column: null
+    start_date: null       # first date with the stuck value, YYYY-MM-DD
+    end_date: null         # last date with the stuck value, YYYY-MM-DD
+  target_typos:
+    present: true
+    count: 13              # rows whose target was typed 10 times too big
+  spelling_variants:
+    present: false
+    column: null
+    true_levels: null      # how many real categories there are after cleaning
+
+tracking:
+  experiment_name: "Tea_Leaf_Yield_Prediction"
+  best_run_id: "b68942e1a3674af1951462c2d388abb6"        # the MLflow run id of your v1 model
+  registered_model_name: "TeaLeafYieldPredictor"
+  champion_version: 2
+
+monitoring:
+  psi:                     # cleaned train.csv vs later.csv, 10 bins
+    worker_exp_yr: 0.066845
+    rain_mm_week: 0.023348
+    slope_deg: 0.034319
+    temp_c: 0.038319
+    bush_age_yr: 0.045195
+    hours_worked: 5.565345
+  most_drifted_feature: "hours_worked"
+  mae_by_group:            # v1 on later.csv, per value of section
+    'Upper Garden': 4.656064
+    'Lower Garden': 3.932558
+    'River Side': 13.728336
+  worst_served_group: "River Side"
+  mae_v1_on_check: 7.438206    # v1 on the last 30% of later.csv (by date)
+  mae_v2_on_check: 2.315265    # v2 on the same rows
+  decision: "promote"          # promote or keep
