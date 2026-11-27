@@ -1,0 +1,71 @@
+# Version control
+.git
+.gitignore
+.dvc
+.dvcignore
+
+# Python environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Testing and caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Raw and processed datasets
+data/
+*.zip
+*.csv
+
+# MLflow local artifacts
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Jupyter
+notebooks/
+.ipynb_checkpoints/
+
+# Reports
+reports/
+
+# Source training scripts (not needed for serving)
+src/
+
+# Tests (not needed in production image)
+tests/
+
+# Documentation
+docs/
+*.md
+!requirements.txt
+
+# Kubernetes manifests
+k8s/
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Render
+render.yaml
+
+# Logs
+*.log

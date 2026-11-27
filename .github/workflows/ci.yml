@@ -1,12 +1,15 @@
-﻿name: Tea Leaf Yield Prediction CI
+name: Tea Leaf Yield Prediction CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, shubham-deployment]
   pull_request:
     branches: [main]
 
 jobs:
+  # ----------------------------------------------------------------
+  # Job 1: Unit, integration and manifest tests
+  # ----------------------------------------------------------------
   test:
     runs-on: ubuntu-latest
 
@@ -28,3 +31,139 @@ jobs:
       - name: Run model and API tests
         run: |
           python -m pytest tests/test_model_artifact.py tests/test_api.py -v
+
+      - name: Run deployment and manifest tests
+        run: |
+          python -m pytest tests/test_deployment.py -v
+
+  # ----------------------------------------------------------------
+  # Job 2: Docker build, container run and HTTP smoke tests
+  # ----------------------------------------------------------------
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t tea-leaf-api:1.0.0 .
+
+      - name: Start container
+        run: |
+          docker run -d --name tea-leaf-api -p 8000:8000 tea-leaf-api:1.0.0
+
+      - name: Wait for container startup
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "Container is healthy"
+              break
+            fi
+            echo "Waiting for container... attempt $i"
+            sleep 2
+          done
+
+      - name: Health endpoint smoke test
+        run: |
+          RESPONSE=$(curl -sf http://localhost:8000/health)
+          echo "Health response: $RESPONSE"
+          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert d['model_loaded'] is True, 'Model not loaded'"
+
+      - name: Readiness endpoint smoke test
+        run: |
+          RESPONSE=$(curl -sf http://localhost:8000/ready)
+          echo "Readiness response: $RESPONSE"
+          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert d['status'] == 'ready', 'Service not ready'"
+
+      - name: Valid prediction smoke test
+        run: |
+          RESPONSE=$(curl -sf -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"worker_exp_yr":48,"rain_mm_week":285,"slope_deg":21,"temp_c":15.9,"bush_age_yr":10,"hours_worked":5.4,"flush":"monsoon","section":"River Side"}')
+          echo "Prediction response: $RESPONSE"
+          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert 'predicted_yield_kg_per_worker' in d, 'Missing prediction key'"
+
+      - name: Invalid input smoke test
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"worker_exp_yr":"invalid"}')
+          echo "Invalid input status: $STATUS"
+          [ "$STATUS" = "422" ] || (echo "Expected 422, got $STATUS" && exit 1)
+
+      - name: Show container logs
+        if: always()
+        run: |
+          docker logs tea-leaf-api
+
+      - name: Cleanup container
+        if: always()
+        run: |
+          docker stop tea-leaf-api || true
+          docker rm tea-leaf-api || true
+
+  # ----------------------------------------------------------------
+  # Job 3: Kubernetes deployment smoke test with kind
+  # ----------------------------------------------------------------
+  kubernetes:
+    runs-on: ubuntu-latest
+    needs: docker
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create kind cluster
+        run: |
+          kind create cluster --name kind --wait 120s
+
+      - name: Build Docker image
+        run: |
+          docker build -t tea-leaf-api:1.0.0 .
+
+      - name: Load image into kind cluster
+        run: |
+          kind load docker-image tea-leaf-api:1.0.0 --name kind
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+
+      - name: Wait for deployment rollout
+        run: |
+          kubectl rollout status deployment/tea-leaf-api --timeout=180s || {
+            echo "=== ROLLOUT FAILED: POD STATUS ==="
+            kubectl get pods -o wide
+            echo "=== DESCRIBE PODS ==="
+            kubectl describe pods -l app=tea-leaf-api
+            echo "=== CLUSTER EVENTS ==="
+            kubectl get events --sort-by='.lastTimestamp'
+            exit 1
+          }
+
+      - name: Verify pods and service
+        run: |
+          kubectl get pods -o wide
+          kubectl get services
+          kubectl get endpointslices
+
+      - name: Test service via port-forward
+        run: |
+          kubectl port-forward service/tea-leaf-api-service 8080:80 &
+          sleep 5
+          curl -sf http://localhost:8080/health
+          curl -sf http://localhost:8080/ready
+          RESPONSE=$(curl -sf -X POST http://localhost:8080/predict \
+            -H "Content-Type: application/json" \
+            -d '{"worker_exp_yr":48,"rain_mm_week":285,"slope_deg":21,"temp_c":15.9,"bush_age_yr":10,"hours_worked":5.4,"flush":"monsoon","section":"River Side"}')
+          echo "K8s prediction response: $RESPONSE"
+          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert 'predicted_yield_kg_per_worker' in d"
+
+      - name: Deployment logs
+        if: always()
+        run: |
+          kubectl logs -l app=tea-leaf-api --tail=50 || true

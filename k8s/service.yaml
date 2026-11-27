@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tea-leaf-api-service
+  labels:
+    app: tea-leaf-api
+spec:
+  type: ClusterIP
+  selector:
+    app: tea-leaf-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
