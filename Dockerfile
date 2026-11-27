@@ -15,6 +15,8 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 # --------------- Application code & model ---------------------
+COPY params.yaml .
+COPY serving.py .
 COPY app.py .
 COPY streamlit_app.py .
 COPY models/ models/

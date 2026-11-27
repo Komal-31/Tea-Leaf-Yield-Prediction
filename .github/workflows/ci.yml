@@ -76,21 +76,21 @@ jobs:
         run: |
           RESPONSE=$(curl -sf http://localhost:8000/health)
           echo "Health response: $RESPONSE"
-          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert d['model_loaded'] is True, 'Model not loaded'"
+          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert d['status'] == 'ok', d; assert d['model_loaded'] is True, 'Model not loaded'; assert d['model_version'] == 4, d"
 
       - name: Readiness endpoint smoke test
         run: |
           RESPONSE=$(curl -sf http://localhost:8000/ready)
           echo "Readiness response: $RESPONSE"
-          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert d['status'] == 'ready', 'Service not ready'"
+          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert d['status'] == 'ready', 'Service not ready'; assert d['model_version'] == 4, d"
 
       - name: Valid prediction smoke test
         run: |
           RESPONSE=$(curl -sf -X POST http://localhost:8000/predict \
             -H "Content-Type: application/json" \
-            -d '{"worker_exp_yr":48,"rain_mm_week":285,"slope_deg":21,"temp_c":15.9,"bush_age_yr":10,"hours_worked":5.4,"flush":"monsoon","section":"River Side"}')
+            -d '{"worker_exp_yr":12,"rain_mm_week":150,"slope_deg":17,"temp_c":25,"bush_age_yr":10,"hours_worked":6,"flush":"monsoon","section":"River Side"}')
           echo "Prediction response: $RESPONSE"
-          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert 'predicted_yield_kg_per_worker' in d, 'Missing prediction key'"
+          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert 'predicted_yield_kg_per_worker' in d, 'Missing prediction key'; assert d['model_version'] == 4, d"
 
       - name: Invalid input smoke test
         run: |
@@ -99,6 +99,18 @@ jobs:
             -d '{"worker_exp_yr":"invalid"}')
           echo "Invalid input status: $STATUS"
           [ "$STATUS" = "422" ] || (echo "Expected 422, got $STATUS" && exit 1)
+
+          STATUS_HOURS=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"worker_exp_yr":12,"rain_mm_week":150,"slope_deg":17,"temp_c":25,"bush_age_yr":10,"hours_worked":16,"flush":"monsoon","section":"River Side"}')
+          echo "Invalid hours_worked status: $STATUS_HOURS"
+          [ "$STATUS_HOURS" = "422" ] || (echo "Expected 422, got $STATUS_HOURS" && exit 1)
+
+          STATUS_RAIN=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"worker_exp_yr":12,"rain_mm_week":-5,"slope_deg":17,"temp_c":25,"bush_age_yr":10,"hours_worked":6,"flush":"monsoon","section":"River Side"}')
+          echo "Invalid rain_mm_week status: $STATUS_RAIN"
+          [ "$STATUS_RAIN" = "422" ] || (echo "Expected 422, got $STATUS_RAIN" && exit 1)
 
       - name: Show container logs
         if: always()
@@ -161,13 +173,13 @@ jobs:
         run: |
           kubectl port-forward service/tea-leaf-api-service 8080:80 &
           sleep 5
-          curl -sf http://localhost:8080/health
+          curl -sf http://localhost:8080/health | python3 -c "import sys, json; d=json.load(sys.stdin); assert d['status'] == 'ok' and d['model_version'] == 4, d"
           curl -sf http://localhost:8080/ready
           RESPONSE=$(curl -sf -X POST http://localhost:8080/predict \
             -H "Content-Type: application/json" \
-            -d '{"worker_exp_yr":48,"rain_mm_week":285,"slope_deg":21,"temp_c":15.9,"bush_age_yr":10,"hours_worked":5.4,"flush":"monsoon","section":"River Side"}')
+            -d '{"worker_exp_yr":12,"rain_mm_week":150,"slope_deg":17,"temp_c":25,"bush_age_yr":10,"hours_worked":6,"flush":"monsoon","section":"River Side"}')
           echo "K8s prediction response: $RESPONSE"
-          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert 'predicted_yield_kg_per_worker' in d"
+          echo "$RESPONSE" | python3 -c "import sys, json; d=json.load(sys.stdin); assert 'predicted_yield_kg_per_worker' in d and d['model_version'] == 4, d"
 
       - name: Deployment logs
         if: always()
