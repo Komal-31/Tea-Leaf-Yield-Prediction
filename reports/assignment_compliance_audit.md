@@ -5,7 +5,7 @@
 **Updated:** 2026-11-27 (Post PR #3 & Stage 4 Final Corrections)
 
 > [!IMPORTANT]
-> Stage 1–2 cleaning, training, and `requirements.txt` pinning gaps were resolved by Ravish Aggarwal in PR #3 (`3138d2a`). Remaining FastAPI, Docker, Kubernetes, and JSON logging gaps belong to other teammates and were intentionally **not** rewritten in this monitoring branch.
+> Stage 1–2 cleaning, training, and `requirements.txt` pinning gaps were resolved by Ravish Aggarwal in PR #3 (`3138d2a`). Stage 4 FastAPI, Streamlit, `@champion` v4 serving, input validation, and `/health` `"ok"` compliance gaps were resolved by Komal Bisht on branch `komal-final-corrections`. Remaining Docker tag (`mp148-api:1.0`), Kubernetes (`mp148-api`, `mp148-svc`, 4 replicas, `/health` readiness probe), and JSON logging gaps belong to Shubham Mittal and were intentionally **not** rewritten in this branch.
 
 ---
 
@@ -16,14 +16,14 @@
 | General & Package Structure | 5 | 0 | 0 |
 | DVC & Dataset Integrity | 4 | 0 | 0 |
 | MLflow Tracking & Registry | 6 | 0 | 0 |
-| FastAPI Service & Validation | 3 | 4 | 0 |
+| FastAPI Service & Validation | 8 | 0 | 0 |
 | Docker & `.dockerignore` | 2 | 1 | 0 |
 | Kubernetes Manifests | 5 | 4 | 0 |
 | GitHub Actions CI | 3 | 0 | 1 |
 | Structured Logging | 0 | 1 | 0 |
 | Monitoring, Retraining & Promotion | 4 | 0 | 0 |
 | Final Submission Artifacts | 3 | 0 | 0 |
-| **Total** | **35** | **10** | **1** |
+| **Total** | **40** | **6** | **1** |
 
 ---
 
@@ -63,14 +63,14 @@
 
 | Requirement | Status | Evidence | Suggested Fix |
 |---|---|---|---|
-| `POST /predict` endpoint | **PASS** | Implemented at `app.py:111`. | — |
-| `GET /health` endpoint | **PASS** | Implemented at `app.py:94`. | — |
-| Exactly 8 required prediction input fields | **PASS** | `PredictionInput` (`app.py:75-83`) has all 8 input features. | — |
-| `hours_worked` > 15 rejected via Pydantic `Field` | **FAIL** | `app.py:81` defines `hours_worked: float` with no `Field(..., le=15)`. | Change to `hours_worked: float = Field(..., le=15)`. |
-| `rain_mm_week` < 0 rejected via Pydantic `Field` | **FAIL** | `app.py:77` defines `rain_mm_week: float` with no `Field(..., ge=0)`. | Change to `rain_mm_week: float = Field(..., ge=0)`. |
-| Invalid inputs return HTTP 422 | **FAIL** (Partial) | Type/missing errors return 422, but `hours_worked > 15` and `rain_mm_week < 0` return 200. | Add Pydantic `Field` bounds and HTTP 422 tests in `tests/test_api.py`. |
-| `GET /health` returns `{"status": "ok"}` | **FAIL** | `app.py:97` returns `{"status": "healthy", "model_loaded": True}`. | Update `app.py` and `tests/test_api.py` (with Komal/Shubham) to return `{"status": "ok", ...}`. |
-| Served model updated to final champion | **FAIL** | `app.py:29` and `streamlit_app.py:9` load `models/tea_leaf_v1`, whereas final `@champion` is `models/tea_leaf_v4`. | Coordinate with Ravish/Komal/Shubham to update `MODEL_PATH` to `models/tea_leaf_v4` (and update `test_api.py`). |
+| `POST /predict` endpoint | **PASS** | Implemented in `app.py`, returns `predicted_yield_kg_per_worker` and `model_version: 4`. | — |
+| `GET /health` endpoint | **PASS** | Implemented in `app.py`, returns HTTP 200 when loaded and HTTP 503 when model is unloaded. | — |
+| Exactly 8 required prediction input fields | **PASS** | `PredictionInput` in `app.py` defines all 8 features from `params.yaml` (`data.features`). | — |
+| `hours_worked` > 15 rejected via Pydantic `Field` | **PASS** | `hours_worked: float = Field(..., ge=0, le=MAX_HOURS_WORKED)` (`MAX_HOURS_WORKED=15` in `params.yaml`), verified via HTTP 422 tests in `tests/test_api.py`. | — |
+| `rain_mm_week` < 0 rejected via Pydantic `Field` | **PASS** | `rain_mm_week: float = Field(..., ge=MIN_RAIN_MM_WEEK)` (`MIN_RAIN_MM_WEEK=0` in `params.yaml`), verified via HTTP 422 tests in `tests/test_api.py`. | — |
+| Invalid inputs return HTTP 422 | **PASS** | Type/missing errors, `hours_worked > 15`, `hours_worked < 0`, and `rain_mm_week < 0` all return HTTP 422 in `tests/test_api.py`. | — |
+| `GET /health` returns `{"status": "ok"}` | **PASS** | `GET /health` returns `{"status": "ok", "model_loaded": True, "model_version": 4}` when loaded. | — |
+| Served model updated to final champion | **PASS** | `app.py`, `streamlit_app.py`, and `serving.py` load `models/tea_leaf_v4` configured in `params.yaml` (`serving.model_dir`), aligned with `TeaLeafYieldPredictor@champion` (v4). | — |
 
 ### 5. Docker (`Dockerfile`, `.dockerignore`)
 
