@@ -20,7 +20,7 @@ data_issues:
     present: true
     column: "slope_deg"
     value: 999             # the special number typed instead of a blank
-    count: 70              # how many rows have it
+    count: 70              # how many rows have it (70 in raw train.csv, 65 unique)
   duplicate_rows:
     present: true
     count: 44              # number of EXTRA copies (rows you would delete)
@@ -39,24 +39,24 @@ data_issues:
 
 tracking:
   experiment_name: "Tea_Leaf_Yield_Prediction"
-  best_run_id: "b68942e1a3674af1951462c2d388abb6"        # the MLflow run id of your v1 model
+  best_run_id: "50a5ecb488a3438aa1d76aece128c2b2"        # the MLflow run id of the corrected baseline (V3) model
   registered_model_name: "TeaLeafYieldPredictor"
-  champion_version: 2
+  champion_version: 4
 
 monitoring:
-  psi:                     # cleaned train.csv vs later.csv, 10 bins
-    worker_exp_yr: 0.066845
+  psi:                     # corrected cleaned train.csv vs later.csv, 10 bins
+    worker_exp_yr: 0.033341
     rain_mm_week: 0.023348
     slope_deg: 0.034319
     temp_c: 0.038319
     bush_age_yr: 0.045195
     hours_worked: 5.565345
   most_drifted_feature: "hours_worked"
-  mae_by_group:            # v1 on later.csv, per value of section
-    'Upper Garden': 4.656064
-    'Lower Garden': 3.932558
-    'River Side': 13.728336
+  mae_by_group:            # corrected V3 on later.csv, per value of section
+    'Upper Garden': 4.636935
+    'Lower Garden': 3.852216
+    'River Side': 13.656958
   worst_served_group: "River Side"
-  mae_v1_on_check: 7.438206    # v1 on the last 30% of later.csv (by date)
-  mae_v2_on_check: 2.315265    # v2 on the same rows
+  mae_v1_on_check: 7.438888    # corrected baseline (V3) on the last 30% of later.csv (by date)
+  mae_v2_on_check: 2.338811    # retrained model (V4) on the same rows
   decision: "promote"          # promote or keep

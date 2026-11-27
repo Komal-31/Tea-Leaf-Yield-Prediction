@@ -72,6 +72,9 @@ def audit_seven_issues(
                                 "group_value": str(sec),
                                 "factor": int(factor),
                                 "affected_unique_rows": int((unique_df["section"] == sec).sum()),
+                                "nonzero_affected_unique_rows": int(
+                                    ((unique_df["section"] == sec) & (unique_df[col] != 0)).sum()
+                                ),
                                 "affected_raw_rows": int((train_df["section"] == sec).sum()),
                             }
                             break

@@ -1,10 +1,14 @@
-"""Unit tests for holdout prediction generation and CSV validation."""
+"""Unit tests for holdout prediction generation, validation, and committed CSV schema."""
 
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
 
 from src.predict_holdout import generate_holdout_predictions, validate_predictions_df
+
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 class _LinearMockModel:
@@ -81,3 +85,15 @@ def test_validate_predictions_rejects_bad_inputs():
         validate_predictions_df(
             pd.DataFrame({"record_id": ["R1", "R2"], "prediction": [1.0, np.nan]}), holdout_df
         )
+
+
+def test_committed_holdout_predictions_structure():
+    pred_path = ROOT / "predictions" / "holdout_predictions.csv"
+    assert pred_path.exists()
+    df = pd.read_csv(pred_path)
+    assert list(df.columns) == ["record_id", "prediction"]
+    assert len(df) == 250
+    assert not df["record_id"].duplicated().any()
+    assert df["prediction"].notna().all()
+    assert np.isfinite(df["prediction"]).all()
+    assert (df["prediction"] > 0).all()

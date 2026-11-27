@@ -1,0 +1,40 @@
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.13.9
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.9.1
+    skops_trusted_types:
+    - numpy.dtype
+    - sklearn.tree._tree.Tree
+    - sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor
+is_signature_from_type_hint: false
+mlflow_version: 3.18.0
+model_id: null
+model_size_bytes: 1844991
+model_uuid: 0c6d98767e7a4d84905a43ac144e51e7
+prompts: null
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  serving_input_path: serving_input_example.json
+  type: dataframe
+signature:
+  inputs: '[{"type": "double", "name": "worker_exp_yr", "required": true}, {"type":
+    "long", "name": "rain_mm_week", "required": true}, {"type": "double", "name":
+    "slope_deg", "required": true}, {"type": "double", "name": "temp_c", "required":
+    true}, {"type": "long", "name": "bush_age_yr", "required": true}, {"type": "double",
+    "name": "hours_worked", "required": true}, {"type": "string", "name": "flush",
+    "required": true}, {"type": "string", "name": "section", "required": true}]'
+  outputs: '[{"type": "double", "required": true}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-11-27 15:27:01.959231'

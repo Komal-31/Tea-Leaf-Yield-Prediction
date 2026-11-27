@@ -1,5 +1,5 @@
 scope,section,record_count,mae,rmse,mean_actual,mean_predicted,is_worst_served
-overall,ALL,300,7.663842,10.232528,42.249,35.0144,False
-section,River Side,106,13.728336,15.221534,47.9481,34.2198,True
-section,Upper Garden,112,4.656064,6.408278,39.2491,35.2076,False
-section,Lower Garden,82,3.932558,5.240919,38.9793,35.7778,False
+overall,ALL,300,7.60952,10.170568,42.249,35.0513,False
+section,River Side,106,13.656958,15.169144,47.9481,34.2912,True
+section,Upper Garden,112,4.636935,6.267052,39.2491,35.2695,False
+section,Lower Garden,82,3.852216,5.229279,38.9793,35.736,False
